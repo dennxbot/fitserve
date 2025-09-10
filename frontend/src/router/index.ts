@@ -88,6 +88,17 @@ const router = createRouter({
   ]
 })
 
+// Handle redirect from 404.html
+router.beforeEach((to, from, next) => {
+  // Check if we have a redirect query parameter (from 404.html)
+  if (to.query.redirect) {
+    const redirect = decodeURIComponent(to.query.redirect as string)
+    next(redirect)
+    return
+  }
+  next()
+})
+
 // Navigation guards
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()

@@ -53,6 +53,18 @@ app.use(helmet({
 }));
 
 // CORS configuration
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://fitserve-frontend.onrender.com'
+];
+
+// Add any additional origins from environment variable
+if (CORS_ORIGIN && CORS_ORIGIN !== 'http://localhost:3000') {
+  const additionalOrigins = CORS_ORIGIN.split(',').map(origin => origin.trim());
+  allowedOrigins.push(...additionalOrigins);
+}
+
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, etc.)
@@ -63,12 +75,12 @@ app.use(cors({
       return callback(null, true);
     }
     
-    // In production, check against allowed origins
-    const allowedOrigins = CORS_ORIGIN.split(',').map(origin => origin.trim());
+    // Check against allowed origins
     if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
       return callback(null, true);
     }
     
+    console.log(`CORS blocked origin: ${origin}`);
     return callback(new Error('CORS policy violation'), false);
   },
   credentials: true,

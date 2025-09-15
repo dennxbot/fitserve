@@ -392,6 +392,22 @@ class AuthService {
   }
 
   /**
+   * Return the current authenticated user's profile
+   * @param {string} userId
+   */
+  async getCurrentUser(userId) {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+      const user = await userService.getUserById(userId);
+      return user;
+    } catch (error) {
+      throw new Error(`Failed to get current user: ${error.message}`);
+    }
+  }
+
+  /**
    * Verify JWT token
    * @param {string} token - JWT token
    * @returns {Promise<Object>} Decoded token data

@@ -11,17 +11,43 @@ router.post('/register', async (req, res) => {
       password, 
       firstName, 
       lastName, 
+      name, // For mobile compatibility
       dateOfBirth, 
       gender, 
       height, 
       weight,
       activityLevel,
+      activity_level, // For mobile compatibility
       goal,
-      targetWeight
+      targetWeight,
+      profile // For mobile compatibility
     } = req.body;
 
+    // Handle mobile app format (name field) vs web format (firstName/lastName)
+    let finalFirstName, finalLastName;
+    if (name && !firstName && !lastName) {
+      // Mobile format: split name into firstName and lastName
+      const nameParts = name.trim().split(' ');
+      finalFirstName = nameParts[0] || '';
+      finalLastName = nameParts.slice(1).join(' ') || '';
+    } else {
+      // Web format: use firstName and lastName directly
+      finalFirstName = firstName;
+      finalLastName = lastName;
+    }
+
+    // Handle mobile profile format
+    const mobileProfile = profile || {};
+    const finalDateOfBirth = dateOfBirth || mobileProfile.dateOfBirth;
+    const finalGender = gender || mobileProfile.gender;
+    const finalHeight = height || mobileProfile.height;
+    const finalWeight = weight || mobileProfile.weight;
+    const finalActivityLevel = activityLevel || activity_level || mobileProfile.activity_level;
+    const finalGoal = goal || mobileProfile.goal;
+    const finalTargetWeight = targetWeight || mobileProfile.targetWeight;
+
     // Validate required fields
-    if (!email || !password || !firstName || !lastName) {
+    if (!email || !password || !finalFirstName || !finalLastName) {
       return res.status(400).json({
         success: false,
         message: 'Email, password, firstName, and lastName are required'
@@ -29,7 +55,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Validate additional required fields for complete profile
-    if (!dateOfBirth || !gender || !height || !weight || !activityLevel || !goal) {
+    if (!finalDateOfBirth || !finalGender || !finalHeight || !finalWeight || !finalActivityLevel || !finalGoal) {
       return res.status(400).json({
         success: false,
         message: 'Date of birth, gender, height, weight, activity level, and fitness goal are required for registration'
@@ -38,7 +64,7 @@ router.post('/register', async (req, res) => {
     
     // Validate target weight for goals that require it
     const goalsThatRequireTargetWeight = ['lose_weight', 'gain_weight', 'build_muscle'];
-    if (goalsThatRequireTargetWeight.includes(goal) && (!targetWeight || targetWeight <= 0)) {
+    if (goalsThatRequireTargetWeight.includes(finalGoal) && (!finalTargetWeight || finalTargetWeight <= 0)) {
       return res.status(400).json({
         success: false,
         message: 'Target weight is required for your selected fitness goal'
@@ -49,15 +75,15 @@ router.post('/register', async (req, res) => {
     const result = await authService.register({
       email,
       password,
-      firstName,
-      lastName,
-      dateOfBirth,
-      gender,
-      height,
-      weight,
-      activityLevel,
-      goal,
-      targetWeight
+      firstName: finalFirstName,
+      lastName: finalLastName,
+      dateOfBirth: finalDateOfBirth,
+      gender: finalGender,
+      height: finalHeight,
+      weight: finalWeight,
+      activityLevel: finalActivityLevel,
+      goal: finalGoal,
+      targetWeight: finalTargetWeight
     });
 
     res.status(201).json({

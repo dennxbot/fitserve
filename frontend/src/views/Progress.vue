@@ -37,7 +37,7 @@
           <!-- Action Buttons -->
           <div class="mt-6 lg:mt-0 flex flex-wrap gap-3">
             <button
-              @click="showAddWeight = true"
+              @click="openModal"
               class="inline-flex items-center px-6 py-3 bg-white text-purple-700 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,7 +336,7 @@
           Track your weight and monitor your fitness progress over time. Log your first weight entry to get started.
         </p>
         <button
-          @click="showAddWeight = true"
+          @click="openModal"
           class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
         >
           <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -363,7 +363,7 @@
         
         <form @submit.prevent="submitForm" class="p-6 space-y-6">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Weight (kg) *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Current Weight (kg) *</label>
             <input
               v-model.number="weightForm.weight"
               type="number"
@@ -374,6 +374,14 @@
               placeholder="70.5"
               required
             />
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <button type="button" @click="adjustWeight(-1)" class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium">-1</button>
+              <button type="button" @click="adjustWeight(-0.5)" class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium">-0.5</button>
+              <button type="button" @click="adjustWeight(0.5)" class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium">+0.5</button>
+              <button type="button" @click="adjustWeight(1)" class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium">+1</button>
+              <span class="ml-2 text-xs text-gray-500">We record your absolute weight. Use +/- to adjust.</span>
+            </div>
+            <p v-if="weightForm.weight < 20" class="mt-2 text-xs text-amber-600">Entered weight is unusually low. Are you sure?</p>
           </div>
           
           <div>
@@ -560,6 +568,23 @@ const addWeightEntry = async () => {
   } catch (error) {
     console.error('Failed to add weight entry:', error)
   }
+}
+
+const openModal = () => {
+  // Prefill with current weight if available
+  const current = backendProgress.value?.currentWeight || authStore.currentUser?.weight || 0
+  weightForm.value = {
+    weight: current,
+    date: new Date().toISOString().split('T')[0],
+    notes: ''
+  }
+  showAddWeight.value = true
+}
+
+const adjustWeight = (delta: number) => {
+  const next = Math.round(((weightForm.value.weight || 0) + delta) * 10) / 10
+  // Clamp to reasonable bounds
+  weightForm.value.weight = Math.min(500, Math.max(1, next))
 }
 
 

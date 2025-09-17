@@ -478,11 +478,11 @@ const sortedWeightEntries = computed(() => {
   if (!source) return []
 
   return [...source].sort((a, b) => {
-    const ra = new Date(a.recorded_at).getTime()
-    const rb = new Date(b.recorded_at).getTime()
+    const ra = new Date(a.recorded_at || a.recordedAt).getTime()
+    const rb = new Date(b.recorded_at || b.recordedAt).getTime()
     if (rb !== ra) return rb - ra // recorded_at DESC
-    const ca = new Date(a.created_at || a.createdAt || a.recorded_at).getTime()
-    const cb = new Date(b.created_at || b.createdAt || b.recorded_at).getTime()
+    const ca = new Date(a.created_at || a.createdAt || a.recorded_at || a.recordedAt).getTime()
+    const cb = new Date(b.created_at || b.createdAt || b.recorded_at || b.recordedAt).getTime()
     return cb - ca // created_at DESC as tie-breaker
   })
 })
@@ -504,9 +504,9 @@ const remainingWeight = computed(() => {
 });
 
 // Helper functions
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string | undefined) => {
   try {
-    const date = new Date(dateString)
+    const date = new Date(dateString || '')
     if (isNaN(date.getTime())) return 'Invalid Date'
     
     return date.toLocaleDateString('en-US', {

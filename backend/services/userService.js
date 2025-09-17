@@ -573,6 +573,45 @@ class UserService {
       if (!weight || weight <= 0) {
         throw new Error('Valid weight value is required');
       }
+      // If this is the first ever weight entry for the user, create a baseline entry
+      // with the user's current profile weight so subsequent change calculations work.
+      // We insert the baseline slightly earlier than the new record to preserve order.
+      try {
+        // Get existing entry count
+        const { count, error: countError } = await supabaseAdmin
+          .from('weight_entries')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId);
+
+        if (countError) {
+          // Non-fatal; log and continue
+          console.warn(`[recordWeight] Failed to count weight entries for user ${userId}: ${countError.message}`);
+        }
+
+        if (!count || count === 0) {
+          // Fetch user's current profile to capture current weight as baseline
+          const user = await this.getUserById(userId);
+          const baselineWeight = user?.weight;
+          if (baselineWeight && baselineWeight > 0) {
+            const baselineAt = new Date(recordedAt);
+            baselineAt.setMinutes(baselineAt.getMinutes() - 1);
+            const { error: baselineError } = await supabaseAdmin
+              .from('weight_entries')
+              .insert({
+                user_id: userId,
+                weight: baselineWeight,
+                recorded_at: baselineAt.toISOString(),
+                created_at: new Date(),
+                notes: 'Baseline (auto-created)'
+              });
+            if (baselineError) {
+              console.warn(`[recordWeight] Failed to insert baseline for user ${userId}: ${baselineError.message}`);
+            }
+          }
+        }
+      } catch (baselineCatchError) {
+        console.warn(`[recordWeight] Baseline pre-insert step failed for user ${userId}: ${baselineCatchError.message}`);
+      }
 
       const { data, error } = await supabaseAdmin
         .from('weight_entries')

@@ -58,8 +58,8 @@ const validateRegister = (userData) => {
       'number.min': 'Height must be at least 50 cm',
       'number.max': 'Height cannot exceed 300 cm'
     }),
-    weight: Joi.number().min(20).max(500).optional().messages({
-      'number.min': 'Weight must be at least 20 kg',
+    weight: Joi.number().min(1).max(500).optional().messages({
+      'number.min': 'Weight must be at least 1 kg',
       'number.max': 'Weight cannot exceed 500 kg'
     }),
     activityLevel: Joi.string().valid(
@@ -142,8 +142,8 @@ const validateUser = (userData, options = {}) => {
       'number.min': 'Height must be at least 50 cm',
       'number.max': 'Height cannot exceed 300 cm'
     }),
-    weight: Joi.number().min(20).max(500).optional().messages({
-      'number.min': 'Weight must be at least 20 kg',
+    weight: Joi.number().min(1).max(500).optional().messages({
+      'number.min': 'Weight must be at least 1 kg',
       'number.max': 'Weight cannot exceed 500 kg'
     }),
     activityLevel: Joi.string().valid(

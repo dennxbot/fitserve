@@ -42,8 +42,8 @@ class UserModel {
       errors.push('Height must be between 50 and 300 cm');
     }
 
-    if (this.weight && (this.weight < 20 || this.weight > 500)) {
-      errors.push('Weight must be between 20 and 500 kg');
+    if (this.weight && (this.weight < 1 || this.weight > 500)) {
+      errors.push('Weight must be between 1 and 500 kg');
     }
 
     return {

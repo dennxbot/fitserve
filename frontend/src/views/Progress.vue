@@ -237,7 +237,7 @@
                   class="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                 >
                   <div class="text-sm text-gray-600">
-                    {{ formatDate(entry.recorded_at) }}
+                    {{ formatDate(entry.recorded_at || entry.recordedAt) }}
                   </div>
                   <div class="font-semibold text-gray-900">
                     {{ entry.weight }}kg

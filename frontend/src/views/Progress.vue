@@ -472,9 +472,14 @@ const bmiCategory = computed(() => {
 const sortedWeightEntries = computed(() => {
   if (!backendProgress.value?.weightEntries) return []
   
-  return [...backendProgress.value.weightEntries].sort((a, b) => 
-    new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime()
-  )
+  return [...backendProgress.value.weightEntries].sort((a, b) => {
+    const ra = new Date(a.recorded_at).getTime()
+    const rb = new Date(b.recorded_at).getTime()
+    if (rb !== ra) return rb - ra // recorded_at DESC
+    const ca = new Date(a.created_at || a.createdAt || a.recorded_at).getTime()
+    const cb = new Date(b.created_at || b.createdAt || b.recorded_at).getTime()
+    return cb - ca // created_at DESC as tie-breaker
+  })
 })
 
 // Computed properties for safe calculations
@@ -509,6 +514,7 @@ const formatDate = (dateString: string) => {
   }
 }
 
+// With newest-first ordering, change = current (newer) - next (older)
 const getWeightChange = (_entry: any, index: number): number | null => {
   if (!backendProgress.value?.weightEntries || index >= sortedWeightEntries.value.length - 1) {
     return null

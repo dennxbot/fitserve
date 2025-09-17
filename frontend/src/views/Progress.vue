@@ -470,9 +470,14 @@ const bmiCategory = computed(() => {
 })
 
 const sortedWeightEntries = computed(() => {
-  if (!backendProgress.value?.weightEntries) return []
-  
-  return [...backendProgress.value.weightEntries].sort((a, b) => {
+  // Prefer the full list from the store (all entries), fallback to progress payload
+  const source = (progressStore as any).weightEntries && (progressStore as any).weightEntries.length
+    ? (progressStore as any).weightEntries
+    : (backendProgress.value?.weightEntries || [])
+
+  if (!source) return []
+
+  return [...source].sort((a, b) => {
     const ra = new Date(a.recorded_at).getTime()
     const rb = new Date(b.recorded_at).getTime()
     if (rb !== ra) return rb - ra // recorded_at DESC
@@ -546,13 +551,17 @@ const refreshData = async () => {
     progressStore.clearError()
     
     // Fetch fresh data from backend progress endpoint
-    const result = await progressStore.getProgressStats()
+    const [statsResult] = await Promise.all([
+      progressStore.getProgressStats(),
+      // Also hydrate the full entries list
+      (progressStore as any).getWeightEntries?.()
+    ])
     
-    if (result.success) {
-      backendProgress.value = result.data
+    if (statsResult.success) {
+      backendProgress.value = statsResult.data
       console.log('🔄 Progress data refreshed:', backendProgress.value)
     } else {
-      console.error('Failed to fetch progress data:', result.message)
+      console.error('Failed to fetch progress data:', statsResult.message)
     }
   } catch (error) {
     console.error('Error refreshing progress data:', error)

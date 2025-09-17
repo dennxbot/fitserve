@@ -109,28 +109,39 @@
 
           <!-- Weight Change -->
           <div class="group relative rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden" :class="{
-            'bg-gradient-to-br from-green-500 to-green-600': backendProgress.weightTrend < 0,
-            'bg-gradient-to-br from-red-500 to-red-600': backendProgress.weightTrend > 0,
-            'bg-gradient-to-br from-gray-500 to-gray-600': backendProgress.weightTrend === 0
+            'bg-gradient-to-br from-green-500 to-green-600': backendProgress.totalEntries > 1 && backendProgress.weightTrend < 0,
+            'bg-gradient-to-br from-red-500 to-red-600': backendProgress.totalEntries > 1 && backendProgress.weightTrend > 0,
+            'bg-gradient-to-br from-blue-500 to-blue-600': backendProgress.totalEntries === 1,
+            'bg-gradient-to-br from-gray-500 to-gray-600': backendProgress.totalEntries === 0 || (backendProgress.totalEntries > 1 && backendProgress.weightTrend === 0)
           }">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6">
               <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path v-if="backendProgress.weightTrend < 0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-                    <path v-else-if="backendProgress.weightTrend > 0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    <path v-if="backendProgress.totalEntries > 1 && backendProgress.weightTrend < 0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                    <path v-else-if="backendProgress.totalEntries > 1 && backendProgress.weightTrend > 0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    <path v-else-if="backendProgress.totalEntries === 1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14" />
                   </svg>
                 </div>
                 <div class="text-right">
-                  <div class="text-2xl font-bold text-white">{{ backendProgress.weightTrend > 0 ? '+' : '' }}{{ backendProgress.weightTrend }}</div>
-                  <div class="text-sm text-white/80">kg</div>
+                  <div class="text-2xl font-bold text-white">
+                    {{ backendProgress.totalEntries > 1 ? 
+                      (backendProgress.weightTrend > 0 ? '+' : '') + backendProgress.weightTrend : 
+                      backendProgress.totalEntries === 1 ? 'First' : 'N/A' }}
+                  </div>
+                  <div class="text-sm text-white/80">
+                    {{ backendProgress.totalEntries > 1 ? 'kg' : 
+                       backendProgress.totalEntries === 1 ? 'entry' : '' }}
+                  </div>
                 </div>
               </div>
               <h3 class="text-lg font-semibold text-white">Weight Change</h3>
               <div class="text-white/80 text-sm">
-                {{ backendProgress.weightTrend < 0 ? 'Lost' : backendProgress.weightTrend > 0 ? 'Gained' : 'No change' }}
+                {{ backendProgress.totalEntries > 1 ? 
+                  (backendProgress.weightTrend < 0 ? 'Lost' : backendProgress.weightTrend > 0 ? 'Gained' : 'No change') :
+                  backendProgress.totalEntries === 1 ? 'Start tracking' : 'No entries' }}
               </div>
             </div>
           </div>
@@ -232,12 +243,12 @@
                     {{ entry.weight }}kg
                   </div>
                   <div class="text-sm" :class="{
-                    'text-green-600': getWeightChange(entry, index) < 0,
-                    'text-red-600': getWeightChange(entry, index) > 0,
-                    'text-gray-500': getWeightChange(entry, index) === 0
+                    'text-green-600': getWeightChange(entry, index) !== null && getWeightChange(entry, index)! < 0,
+                    'text-red-600': getWeightChange(entry, index) !== null && getWeightChange(entry, index)! > 0,
+                    'text-gray-500': getWeightChange(entry, index) !== null && getWeightChange(entry, index) === 0
                   }">
                     <span v-if="getWeightChange(entry, index) !== null">
-                      {{ getWeightChange(entry, index) > 0 ? '+' : '' }}{{ getWeightChange(entry, index) }}kg
+                      {{ getWeightChange(entry, index)! > 0 ? '+' : '' }}{{ getWeightChange(entry, index) }}kg
                     </span>
                     <span v-else class="text-gray-400">—</span>
                   </div>
@@ -411,12 +422,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useProgressStore } from '@/stores/progress'
 import { useAuthStore } from '@/stores/auth'
-import type { WeightEntry } from '@/types'
 
-const router = useRouter()
 const progressStore = useProgressStore()
 const authStore = useAuthStore()
 
@@ -493,7 +501,7 @@ const formatDate = (dateString: string) => {
   }
 }
 
-const getWeightChange = (entry: any, index: number): number | null => {
+const getWeightChange = (_entry: any, index: number): number | null => {
   if (!backendProgress.value?.weightEntries || index >= sortedWeightEntries.value.length - 1) {
     return null
   }
@@ -501,7 +509,7 @@ const getWeightChange = (entry: any, index: number): number | null => {
   const currentEntry = sortedWeightEntries.value[index]
   const previousEntry = sortedWeightEntries.value[index + 1]
   
-  if (!previousEntry) return null
+  if (!currentEntry || !previousEntry) return null
   
   return Math.round((currentEntry.weight - previousEntry.weight) * 10) / 10
 }
@@ -554,27 +562,6 @@ const addWeightEntry = async () => {
   }
 }
 
-const editEntry = (entry: any) => {
-  editingEntry.value = entry
-  weightForm.value = {
-    weight: entry.weight,
-    date: entry.recorded_at ? new Date(entry.recorded_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    notes: entry.notes || ''
-  }
-}
-
-const deleteEntry = async (entryId: string) => {
-  if (confirm('Are you sure you want to delete this weight entry?')) {
-    try {
-      const result = await progressStore.deleteWeightEntry(entryId)
-      if (result.success) {
-        await refreshData()
-      }
-    } catch (error) {
-      console.error('Failed to delete weight entry:', error)
-    }
-  }
-}
 
 const closeModal = () => {
   showAddWeight.value = false
